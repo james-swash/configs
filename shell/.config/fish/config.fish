@@ -1,3 +1,15 @@
+abbr -a e nvim
+abbr -a vim nvim
+
+if command -v exa > /dev/null
+	abbr -a ls 'exa'
+	abbr -a ll 'exa -la'
+end
+
+if command -v bat > /dev/null
+	abbr -a cat 'bat'
+end
+
 function fish_greeting
 	echo
 	echo -e (uname -ro | awk '{print " \\\\e[1mOS: \\\\e[0;32m"$0"\\\\e[0m"}')
