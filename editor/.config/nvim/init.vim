@@ -150,6 +150,16 @@ nvim_lsp.rust_analyzer.setup {
 	  enable = false,
 	},
       },
+      checkOnSave = {
+        -- default: `cargo check`
+        command = "cargo clippy"
+        },
+      },
+      inlayHints = {
+        lifetimeElisionHints = {
+          enable = true,
+          useParameterNames = true
+        },
     },
   },
 }
