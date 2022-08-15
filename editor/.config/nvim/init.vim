@@ -7,95 +7,193 @@ set hlsearch
 set mouse=a
 set number
 set relativenumber
+set clipboard=unnamedplus
+let mapleader = " " 
 
 call plug#begin('~/.config/nvim/plugged')
 
 " Collection of common configurations for the Nvim LSP client
 Plug 'neovim/nvim-lspconfig'
-Plug 'davidhalter/jedi-vim'
-
+Plug 'nvim-lua/plenary.nvim'
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+Plug 'ray-x/lsp_signature.nvim'
 " Extensions to built-in LSP, for example, providing type inlay hints
 Plug 'nvim-lua/lsp_extensions.nvim'
-
 " Autocompletion framework for built-in LSP
-Plug 'nvim-lua/completion-nvim'
-Plug 'rust-lang/rust.vim'
+Plug 'hrsh7th/cmp-nvim-lsp'
+Plug 'hrsh7th/cmp-buffer'
+Plug 'hrsh7th/cmp-path'
+Plug 'hrsh7th/nvim-cmp'
+Plug 'L3MON4D3/LuaSnip'
+Plug 'saadparwaiz1/cmp_luasnip'
+" GUI
 Plug 'itchyny/lightline.vim'
+Plug 'catppuccin/nvim', {'as': 'catppuccin'}
 " Plug 'morhetz/gruvbox'
-Plug 'tyrannicaltoucan/vim-deep-space' 
+" Plug 'tyrannicaltoucan/vim-deep-space' 
+" Fuzzy Finder
 Plug 'airblade/vim-rooter'
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
+Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
+Plug 'nvim-telescope/telescope.nvim'
 call plug#end()
 
-syntax enable
+" syntax enable
 filetype plugin indent on
-set background=dark 
-set completeopt=menuone,noinsert,noselect
+set completeopt=menu,menuone,noinsert,noselect
 " colorscheme gruvbox 
 set termguicolors
-colorscheme deep-space
-set shortmess+=c
-lua <<EOF
+" colorscheme deep-space
+let g:catppuccin_flavour = "macchiato" " latte, frappe, macchiato, mocha
+" set shortmess+=c
 
-local nvim_lsp = require'lspconfig'
+lua << EOF
+-- GUI
+require("catppuccin").setup()
 
-local on_attach = function(client)
-    require'completion'.on_attach(client)
+-- Autocomplete / Suggestions
+local cmp = require'cmp'
+cmp.setup({
+  snippet = {
+    expand = function(args)
+      require('luasnip').lsp_expand(args.body) 
+    end,
+  },
+  mapping = cmp.mapping.preset.insert({
+    ['<C-j>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-k>'] = cmp.mapping.scroll_docs(4), 
+    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<C-e>'] = cmp.mapping({
+      i = cmp.mapping.abort(),
+      c = cmp.mapping.close(),
+    }),
+    ['<Tab>'] = cmp.mapping.confirm({ select = true }),
+  }),
+  sources = cmp.config.sources({
+    { name = 'nvim_lsp' },
+    { name = 'luasnip' }, 
+  }, {
+    { name = 'buffer' },
+  })
+})
+
+local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+
+-- LSP
+local on_attach = function(client, bufnr)
+
+	local function buf_set_keymap(...)
+		vim.api.nvim_buf_set_keymap(bufnr, ...)
+	end
+
+	-- Mappings
+	local opts = { noremap = true, silent = true }
+
+	buf_set_keymap("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
+	buf_set_keymap("n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", opts)
+	buf_set_keymap("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", opts)
+	buf_set_keymap("n", "<C-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
+	buf_set_keymap("n", "gt", "<cmd>lua vim.lsp.buf.type_definition()<CR>", opts)
+	buf_set_keymap("n", "gr", "<cmd>Telescope lsp_references<CR>", opts)
+	buf_set_keymap("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts)
+	buf_set_keymap("n", "<leader>r", "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
+	buf_set_keymap("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
+	buf_set_keymap("n", "<leader>dp", "<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>", opts)
+	buf_set_keymap("n", "<leader>dn", "cmd>lua vim.lsp.diagnostic.goto_next()<CR>", opts)
+	buf_set_keymap("n", "<leader>dl", "<cmd>Telescope diagnostics<CR>", opts)
+
+	if client.server_capabilities.document_formatting then
+		vim.cmd([[
+			augroup formatting
+				autocmd! * <buffer>
+				autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()
+			augroup END
+		]])
+	end
+
+	if client.server_capabilities.document_highlight then
+		vim.cmd([[
+			augroup lsp_document_highlight
+				autocmd! * <buffer>
+				autocmd CursorHold <buffer> lua vim.lsp.buf.document_highlight()
+				autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
+			augroup END
+		]])
+	end
+
+	require "lsp_signature".on_attach({
+    		doc_lines = 0,
+		handler_opts = {
+			border = "none"
+    		},
+  	})
 end
 
-nvim_lsp.pyright.setup{}
 
-nvim_lsp.rust_analyzer.setup({ on_attach=on_attach })
+local nvim_lsp = require('lspconfig')
 
-vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-  vim.lsp.diagnostic.on_publish_diagnostics, {
-    virtual_text = true,
-    signs = true,
-    update_in_insert = true,
-  }
-)
+
+nvim_lsp.rust_analyzer.setup { 
+  capabilities=capabilities,
+  on_attach=on_attach,
+  flags = {
+    debounce_text_changes = 150,
+  },
+  settings = {
+    ["rust-analyzer"] = {
+      cargo = {
+        allFeatures = true,
+      },
+      completion = {
+	postfix = {
+	  enable = false,
+	},
+      },
+    },
+  },
+}
+
+nvim_lsp.pyright.setup {
+  capabilities=capabilities,
+  on_attach=on_attach
+}
+
+-- TreeSitter
+require('nvim-treesitter.configs').setup{
+  ensure_installed = {"rust", "lua", "python", "toml", "svelte"},
+  auto_install = true,
+  highlight = {
+    enable = true,
+    additional_vim_regex_highlighting = false
+  },
+}
+-- Telescope
+require('telescope').load_extension('fzf')
+
 EOF
 
-inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
-inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 
-imap <Tab> <Plug>(completion_smart_tab)
-imap <S-Tab> <Plug>(completion_smart_s_tab)
-
-nnoremap <silent> <c-]> <cmd>lua vim.lsp.buf.definition()<CR>
-nnoremap <silent> K     <cmd>lua vim.lsp.buf.hover()<CR>
-nnoremap <silent> gD    <cmd>lua vim.lsp.buf.implementation()<CR>
-nnoremap <silent> <c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
-nnoremap <silent> 1gD   <cmd>lua vim.lsp.buf.type_definition()<CR>
-nnoremap <silent> gr    <cmd>lua vim.lsp.buf.references()<CR>
-nnoremap <silent> g0    <cmd>lua vim.lsp.buf.document_symbol()<CR>
-nnoremap <silent> gW    <cmd>lua vim.lsp.buf.workspace_symbol()<CR>
-nnoremap <silent> gd    <cmd>lua vim.lsp.buf.declaration()<CR>
-nnoremap <silent> ga    <cmd>lua vim.lsp.buf.code_action()<CR>
-
+colorscheme catppuccin
 set updatetime=300
-autocmd CursorHold * lua vim.lsp.diagnostic.show_line_diagnostics()
-
-nnoremap <silent> g[ <cmd>lua vim.lsp.diagnostic.goto_prev()<CR>
-nnoremap <silent> g] <cmd>lua vim.lsp.diagnostic.goto_next()<CR>
 
 " double space to switch buffers
-nnoremap <space><space> <c-^>
+nnoremap <leader><leader> <c-^>
 " SHIFT + f to find files
-nnoremap <S-f> :Files<cr>
+nnoremap <S-f> :Telescope find_files<cr>
 " Space + f to show buffers
-nnoremap <space>f :buffers<cr>
+nnoremap <leader>f :Telescope buffers theme=ivy<cr>
+" Leader +  g + l to list git commits
+nnoremap <leader>gl :Telescope git_commits<cr>
+nnoremap <leader>lg :Telescope live_grep<cr>
 
+autocmd CursorHold,CursorHoldI *.rs :lua require'lsp_extensions'.inlay_hints{ only_current_line = true }
 
 " I can type :help on my own, thanks
 map <F1> <Esc>
 imap <F1> <Esc>
 
 set signcolumn=yes
-
-autocmd CursorMoved,InsertLeave,BufEnter,BufWinEnter,TabEnter,BufWritePost *.rs,*.py 
-\ lua require'lsp_extensions'.inlay_hints{ prefix = '', highlight = "Comment", enabled = {"TypeHint", "ChainingHint", "ParameterHint"} }
 
 
 let g:rustfmt_autosave = 1
