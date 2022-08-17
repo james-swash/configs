@@ -26,6 +26,8 @@ Plug 'hrsh7th/cmp-path'
 Plug 'hrsh7th/nvim-cmp'
 Plug 'L3MON4D3/LuaSnip'
 Plug 'saadparwaiz1/cmp_luasnip'
+" Formatting
+Plug 'psf/black', { 'branch': 'stable' }
 " GUI
 Plug 'itchyny/lightline.vim'
 Plug 'catppuccin/nvim', {'as': 'catppuccin'}
@@ -197,13 +199,20 @@ nnoremap <leader>f :Telescope buffers theme=ivy<cr>
 nnoremap <leader>gl :Telescope git_commits<cr>
 nnoremap <leader>lg :Telescope live_grep<cr>
 
-autocmd CursorHold,CursorHoldI *.rs :lua require'lsp_extensions'.inlay_hints{ only_current_line = true }
+" autocmd CursorHold,CursorHoldI *.rs :lua require'lsp_extensions'.inlay_hints{ only_current_line = true }
 
 " I can type :help on my own, thanks
 map <F1> <Esc>
 imap <F1> <Esc>
 
 set signcolumn=yes
+
+augroup format_on_save
+  autocmd!
+  autocmd BufWritePre *.py Black
+  autocmd BufWritePre *.py PyrightOrganizeImports
+augroup end
+
 
 
 let g:rustfmt_autosave = 1
