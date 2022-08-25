@@ -102,7 +102,7 @@ local on_attach = function(client, bufnr)
 	buf_set_keymap("n", "<leader>r", "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
 	buf_set_keymap("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
 	buf_set_keymap("n", "<leader>dp", "<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>", opts)
-	buf_set_keymap("n", "<leader>dn", "cmd>lua vim.lsp.diagnostic.goto_next()<CR>", opts)
+	buf_set_keymap("n", "<leader>dn", "<cmd>lua vim.lsp.diagnostic.goto_next()<CR>", opts)
 	buf_set_keymap("n", "<leader>dl", "<cmd>Telescope diagnostics<CR>", opts)
 
 	if client.server_capabilities.document_formatting then
@@ -198,6 +198,8 @@ nnoremap <leader>f :Telescope buffers theme=ivy<cr>
 " Leader +  g + l to list git commits
 nnoremap <leader>gl :Telescope git_commits<cr>
 nnoremap <leader>lg :Telescope live_grep<cr>
+" Leader + F to show file explorer
+nnoremap <leader>F :Vexplore 15<cr>
 
 " autocmd CursorHold,CursorHoldI *.rs :lua require'lsp_extensions'.inlay_hints{ only_current_line = true }
 
