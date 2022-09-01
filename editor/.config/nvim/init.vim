@@ -16,6 +16,7 @@ call plug#begin('~/.config/nvim/plugged')
 Plug 'neovim/nvim-lspconfig'
 Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+Plug 'nvim-treesitter/nvim-treesitter-context'
 Plug 'ray-x/lsp_signature.nvim'
 " Extensions to built-in LSP, for example, providing type inlay hints
 Plug 'nvim-lua/lsp_extensions.nvim'
@@ -185,6 +186,27 @@ require('nvim-treesitter.configs').setup{
     enable = true,
     additional_vim_regex_highlighting = false
   },
+}
+
+require'treesitter-context'.setup{
+    enable = true, 
+    max_lines = 0,
+    trim_scope = 'outer',
+    patterns = { 
+        default = {
+            'class',
+            'function',
+            'method',
+        },
+        rust = {
+            'impl_item',
+        },
+    },
+    exact_patterns = {
+    },
+    zindex = 20, -- The Z-index of the context window
+    mode = 'cursor',  -- Line used to calculate context. Choices: 'cursor', 'topline'
+    separator = nil, -- Separator between context and content. Should be a single character string, like '-'.
 }
 -- Telescope
 require('telescope').load_extension('fzf')
