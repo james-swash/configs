@@ -171,6 +171,12 @@ nvim_lsp.pyright.setup {
   on_attach=on_attach
 }
 
+nvim_lsp.omnisharp.setup {
+  capabilities=capabilities,
+  on_attach=on_attach,
+  cmd = { "/usr/bin/omnisharp", "--languageserver" , "--hostPID", tostring(pid) }
+}
+
 -- TreeSitter
 require('nvim-treesitter.configs').setup{
   ensure_installed = {"rust", "lua", "python", "toml", "svelte"},
