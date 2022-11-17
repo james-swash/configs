@@ -82,7 +82,7 @@ cmp.setup({
   })
 })
 
-local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 -- LSP
 local on_attach = function(client, bufnr)
@@ -103,8 +103,8 @@ local on_attach = function(client, bufnr)
 	buf_set_keymap("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts)
 	buf_set_keymap("n", "<leader>r", "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
 	buf_set_keymap("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
-	buf_set_keymap("n", "<leader>dp", "<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>", opts)
-	buf_set_keymap("n", "<leader>dn", "<cmd>lua vim.lsp.diagnostic.goto_next()<CR>", opts)
+	buf_set_keymap("n", "<leader>dp", "<cmd>lua vim.diagnostic.goto_prev()<CR>", opts)
+	buf_set_keymap("n", "<leader>dn", "<cmd>lua vim.diagnostic.goto_next()<CR>", opts)
 	buf_set_keymap("n", "<leader>dl", "<cmd>Telescope diagnostics<CR>", opts)
 
 	if client.server_capabilities.document_formatting then
@@ -225,7 +225,7 @@ nnoremap <S-f> :Telescope find_files<cr>
 " Space + f to show buffers
 nnoremap <leader>f :Telescope buffers theme=ivy<cr>
 " Leader +  g + l to list git commits
-nnoremap <leader>gl :Telescope git_commits<cr>
+nnoremap <leader>gc :Telescope git_commits<cr>
 nnoremap <leader>lg :Telescope live_grep<cr>
 " Leader + F to show file explorer
 nnoremap <leader>F :Vexplore 15<cr>
@@ -235,6 +235,19 @@ nnoremap <leader>F :Vexplore 15<cr>
 " I can type :help on my own, thanks
 map <F1> <Esc>
 imap <F1> <Esc>
+inoremap jk <Esc>
+
+" No arrow keys --- force yourself to use the home row
+nnoremap <up> <nop>
+nnoremap <down> <nop>
+inoremap <up> <nop>
+inoremap <down> <nop>
+inoremap <left> <nop>
+inoremap <right> <nop>
+
+" Left and right can switch buffers
+nnoremap <left> :bp<CR>
+nnoremap <right> :bn<CR>
 
 set signcolumn=yes
 
